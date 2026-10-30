@@ -360,8 +360,8 @@ int decodeBlock(FILE*f,FILE*f2,int v,int type){
 			dccoeff=0;
 			getbit(f);	//advance 1 bit
 			if(v==1) printf("Huffman error (DC)\n");
-			if(v==2&&type==0) fprintf(f2,"\n<y>\n//[Y@0x%X.%d] Huffman error -> DC:0 \n0\n</y>",blockAddr>>3,blockAddr&7);
-			if(v==2&&type==1) fprintf(f2,"\n<c>\n//[C@0x%X.%d] Huffman error -> DC:0 \n0\n</c>",blockAddr>>3,blockAddr&7);
+			if(v==2&&type==0) fprintf(f2,"\n*** [Y@0x%X.%d] Huffman error -> DC:0 #0",blockAddr>>3,blockAddr&7);
+			if(v==2&&type==1) fprintf(f2,"\n*** [C@0x%X.%d] Huffman error -> DC:0 #0",blockAddr>>3,blockAddr&7);
 			return DECODE_ERR;
 		}
 		if(dccoeff==EOI_MARKER){
@@ -393,8 +393,8 @@ int decodeBlock(FILE*f,FILE*f2,int v,int type){
 				if(v==1) printf("Huffman error (AC)\n");
 				getbit(f);	//advance 1 bit
 				if(v==1) printf("Huffman error (AC)\n");
-				if(v==2&&type==0) fprintf(f2,"\n<y>\n//[Y@0x%X.%d] Huffman error -> DC:0 \n0\n</y>",blockAddr>>3,blockAddr&7);
-				if(v==2&&type==1) fprintf(f2,"\n<c>\n//[C@0x%X.%d] Huffman error -> DC:0 \n0\n</c>",blockAddr>>3,blockAddr&7);
+				if(v==2&&type==0) fprintf(f2,"\n*** [Y@0x%X.%d] Huffman error -> DC:0 #0",blockAddr>>3,blockAddr&7);
+				if(v==2&&type==1) fprintf(f2,"\n*** [C@0x%X.%d] Huffman error -> DC:0 #0",blockAddr>>3,blockAddr&7);
 				return DECODE_ERR;
 			}
 			if(coeff==EOI_MARKER){
@@ -405,9 +405,9 @@ int decodeBlock(FILE*f,FILE*f2,int v,int type){
 			if(coeff<RESTART_MARKER){
 				rst=-coeff+RESTART_MARKER-0xD0;
 				if(v==1) printf("RESTART marker %d\n",rst);
-				if(v==2){
-					if(type==0)	fprintf(f2,"\n<y>\n//[Y@0x%X.%d] DC:%d AC: truncated by restart marker\n%d\n</y>",blockAddr>>3,blockAddr&7,dccoeff,dccoeff);
-					else fprintf(f2,"\n<c>\n//[C@0x%X.%d] DC:%d AC: truncated by restart marker\n%d\n</c>",blockAddr>>3,blockAddr&7,dccoeff,dccoeff);
+				if(v==2){ // Code beta
+					if(type==0)	; // fprintf(f2,"\n<y>\n//[Y@0x%X.%d] DC:%d AC: truncated by restart marker\n%d\n</y>",blockAddr>>3,blockAddr&7,dccoeff,dccoeff);
+					else ; // fprintf(f2,"\n<c>\n//[C@0x%X.%d] DC:%d AC: truncated by restart marker\n%d\n</c>",blockAddr>>3,blockAddr&7,dccoeff,dccoeff);
 					fprintf(f2,"\n<restart>%d</restart>",rst);
 				}
 				return DECODE_PARTIAL_RESTART+(rst<<8);
@@ -446,19 +446,22 @@ int decodeBlock(FILE*f,FILE*f2,int v,int type){
 		printf(" (%d bit)\n",endAddr-blockAddr);
 		if(ncoeff>64) printf("Too many AC coefficients! (%d)\n",ncoeff);
 	}
-	if(v==2){
-		if(type==0)	fprintf(f2,"\n<y>\n//[Y@0x%X.%d] DC:%d AC:%s\n%d",blockAddr>>3,blockAddr&7,dccoeff,coeffstr,dccoeff);
-		else fprintf(f2,"\n<c>\n//[C@0x%X.%d] DC:%d AC:%s\n%d",blockAddr>>3,blockAddr&7,dccoeff,coeffstr,dccoeff);
+	if(v==2){ // Code beta
+		;
+
+		// if(type==0)	;// fprintf(f2,"\n<y>\n//[Y@0x%X.%d] DC:%d AC:%s\n%d",blockAddr>>3,blockAddr&7,dccoeff,coeffstr,dccoeff);
+		// else ; // fprintf(f2,"\n<c>\n//[C@0x%X.%d] DC:%d AC:%s\n%d",blockAddr>>3,blockAddr&7,dccoeff,coeffstr,dccoeff);
 //		fprintf(f2,"\n//block %d %X, AC %d %X, end %d ",blockAddr,blockAddr/8,ACAddr,ACAddr/8,endAddr);
-		int addr0=ACAddr/8;
-		fseek(f,addr0,0);
-		Rbitcount=addr0*8;
-		getbit(0);	//reset bitcount
-		for(;Rbitcount<ACAddr;getbit(f));	//start of AC data
-		fprintf(f2," 0b");
-		for(;Rbitcount<endAddr;) fprintf(f2,"%d",getbit(f));
-		if(type==0)	fprintf(f2,"\n</y>");
-		else fprintf(f2,"\n</c>");
+		// int addr0=ACAddr/8;
+		// fseek(f,addr0,0);
+		// Rbitcount=addr0*8;
+		// getbit(0);	//reset bitcount
+		// Code beta
+		// for(;Rbitcount<ACAddr;getbit(f));	//start of AC data
+		// ; // fprintf(f2," 0b");
+		// for(;Rbitcount<endAddr;) fprintf(f2,"%d",getbit(f));
+		// if(type==0)	fprintf(f2,"\n</y>");
+		// else fprintf(f2,"\n</c>");
 	}
 	return DECODE_OK;
 }
@@ -694,7 +697,7 @@ Usage:\n\
 					if(dest==0) type[0]='Y';
 					if(dest==1) type[0]='C';
 					printf("ID:%d [%02X] Dest:%d\n",id,sfact,dest);
-					fprintf(f2,"//ID:%d [%02X] Dest:%d\n",id,sfact,dest);
+					fprintf(f2,"// ID:%d [%02X] Dest:%d\n",id,sfact,dest);
 					for(int n=(sfact>>4)*(sfact&0xF);n;n--) strncat(MCUdef,type,sizeof(MCUdef)-1);
 					if((sfact>>4)>mcuPixX) mcuPixX=(sfact>>4);
 					if((sfact&0xF)>mcuPixY) mcuPixY=(sfact&0xF);
@@ -702,7 +705,7 @@ Usage:\n\
 				mcuPixX*=8;
 				mcuPixY*=8;
 				printf("MCU: %s (%dx%d pixel)\n",MCUdef,mcuPixX,mcuPixY);
-				fprintf(f2,"//MCU: %s (%dx%d pixel)\n",MCUdef,mcuPixX,mcuPixY);
+				fprintf(f2,"// MCU: %s (%dx%d pixel)\n",MCUdef,mcuPixX,mcuPixY);
 				Mx=0.5+(float)X/(float)mcuPixX;
 				My=0.5+(float)Y/(float)mcuPixY;
 				printf("[%dx%d=%d MCU]\n",Mx,My,Mx*My);
@@ -788,22 +791,29 @@ Usage:\n\
 				}
 			}
 			fseek(f,0,0);
+			// Code Beta
+
 			if(scanoffset){	//copy first data as raw
-				fprintf(f2,"<raw>");
-				for(int p=0;p<scanoffset;p++){
-					if(p%32==0) fprintf(f2,"\n0x");
-					fprintf(f2,"%02X",fgetc(f));
-				}
-				fprintf(f2,"\n</raw>");
-				fflush(stdout);
+				// for(int p = 0; p < scanoffset; p++) fgetc(f);
+				;  // không in raw
+				// fprintf(f2,"<raw>");
+				// for(int p=0;p<scanoffset;p++){
+				// 	if(p%32==0) fprintf(f2,"\n0x");
+				// 	fprintf(f2,"%02X",fgetc(f));
+				// }
+				// fprintf(f2,"\n</raw>");
+				// fflush(stdout);
 			}
+
+
 			Rbitcount=scanoffset*8;
+
 			int mcucount=0,decode_result,restartCount=0;
 			int rstErrStat[50],rstErrStat_extra=0,errnum,next_rstnum=0,rst;
 			int iblock=0;
 			for(int i=0;i<50;i++) rstErrStat[i]=0;
-			for(;Rbitcount<endoffset*8-16;){	//decode MCU (-2 bytes to end at last MCU)
-				if(iblock==0) fprintf(f2,"\n//************ MCU %d (%d,%d) (@0x%X.%d):",mcucount,mcucount%Mx,mcucount/Mx,Rbitcount>>3,Rbitcount&7);
+			for(;Rbitcount<endoffset*8-16;){	//decode MCU (-2 bytes to end at last MCU) Code Beta
+				if(iblock==0) fprintf(f2,"\n/// MCU %d (%d,%d) (0x%X.%d)",mcucount,mcucount%Mx,mcucount/Mx,Rbitcount>>3,Rbitcount&7);
 				if(MCUdef[iblock]=='Y')	decode_result=decodeBlock(f,f2,2,Y_BLOCK);
 				else if(MCUdef[iblock]=='C')	decode_result=decodeBlock(f,f2,2,C_BLOCK);
 				rst=decode_result>>8;
@@ -814,16 +824,16 @@ Usage:\n\
 				}					
 				if((decode_result&0xF)==DECODE_RESTART||(decode_result&0xF)==DECODE_PARTIAL_RESTART){
 					if(restartCount<restartInt){
-						if(iblock<strlen(MCUdef)) fprintf(f2,"\n//Restart interval error (%d: %d MCU instead of %d)",restartCount-restartInt,restartCount,restartInt);
+						if(iblock<strlen(MCUdef)) fprintf(f2,"\n// Restart interval error (%d: %d MCU instead of %d)",restartCount-restartInt,restartCount,restartInt);
 					}
 					restartCount=0;
 					if(iblock>0){
 						mcucount++;
-						if(iblock<strlen(MCUdef)) fprintf(f2,"\n//MCU error: missing component  (%d instead of %d)",iblock,strlen(MCUdef));
+						if(iblock<strlen(MCUdef)) fprintf(f2,"\n// MCU error: missing component  (%d instead of %d)",iblock,strlen(MCUdef));
 						iblock=0;
 					}
 					if(rst!=next_rstnum){
-						fprintf(f2,"\n//Restart marker # error (%d instead of %d)",rst,next_rstnum);
+						fprintf(f2,"\n// Restart marker # error (%d instead of %d)",rst,next_rstnum);
 					}
 					next_rstnum=rst+1;
 					if(next_rstnum>7) next_rstnum=0;
@@ -833,7 +843,7 @@ Usage:\n\
 						restartCount++;
 						errnum=restartCount-restartInt;
 						if(errnum>0){
-							fprintf(f2,"\n//Restart interval error (+%d: %d MCU instead of %d)",errnum,restartCount,restartInt);
+							fprintf(f2,"\n// Restart interval error (+%d: %d MCU instead of %d)",errnum,restartCount,restartInt);
 							if(errnum<50) rstErrStat[errnum]++;
 							else rstErrStat_extra=1;
 						}
@@ -854,7 +864,7 @@ Usage:\n\
 			}
 			fprintf(f2,"\n<EOI></EOI>\n");
 			printf("found %d MCU (%d Y + %d C)\n",mcucount,Ny,Nc);
-			fprintf(f2,"//found %d MCU (%d Y + %d C)\n",mcucount,Ny,Nc);
+			fprintf(f2,"// Found %d MCU (%d Y + %d C)\n",mcucount,Ny,Nc);
 			if(restartInt>0){
 				int e=0;
 				//convert to absolute chains
