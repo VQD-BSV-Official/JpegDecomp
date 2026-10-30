@@ -34,5 +34,5 @@ Sources are in plain C. Build using make:
 \>make
 
 ## Download
-Already compiled for [Windows](jpeg-decomp.exe)
+Already compiled for [Windows](src/JpegDecomp.exe)
 
